@@ -64,7 +64,7 @@ def check_env_header(header_file="env_config.h", path=None, num_envs=1, num_agen
         path = f"{get_project_root()}/warp_drive/cuda_includes"
 
     with open(f"{path}/{header_file}", "r") as reader:
-        for line in reader.readlines():
+        for line in reader:
             if "num_envs" in line:
                 res = re.findall(r"\b\d+\b", line)
                 assert (

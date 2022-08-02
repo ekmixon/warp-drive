@@ -189,10 +189,7 @@ class TagGridWorld(CUDAEnvironmentContext):
             self.reward_tag[-1] = 1.0 * self.step_cost_for_tagger
 
         reward = self.reward_tag + self.reward_penalty
-        rew = {}
-        for agent_id, r in enumerate(reward):
-            rew[agent_id] = r
-
+        rew = dict(enumerate(reward))
         return rew, tag
 
     def generate_observation(self):
@@ -228,24 +225,25 @@ class TagGridWorld(CUDAEnvironmentContext):
                 )
         else:
             for agent_id in range(self.num_agents):
-                feature_list = []
-                for feature in [
-                    _LOC_X,
-                    _LOC_Y,
-                ]:
-                    feature_list.append(
-                        self.global_state[feature][self.timestep][agent_id]
-                        / self.grid_length
-                    )
-                if agent_id < self.num_agents - 1:
+                feature_list = [
+                    self.global_state[feature][self.timestep][agent_id]
+                    / self.grid_length
                     for feature in [
                         _LOC_X,
                         _LOC_Y,
-                    ]:
-                        feature_list.append(
-                            self.global_state[feature][self.timestep][-1]
-                            / self.grid_length
-                        )
+                    ]
+                ]
+
+                if agent_id < self.num_agents - 1:
+                    feature_list.extend(
+                        self.global_state[feature][self.timestep][-1]
+                        / self.grid_length
+                        for feature in [
+                            _LOC_X,
+                            _LOC_Y,
+                        ]
+                    )
+
                 else:
                     dist_array = None
                     for feature in [
@@ -263,14 +261,15 @@ class TagGridWorld(CUDAEnvironmentContext):
                                 - self.global_state[feature][self.timestep][-1]
                             )
                     min_agent_id = np.argmin(dist_array)
-                    for feature in [
-                        _LOC_X,
-                        _LOC_Y,
-                    ]:
-                        feature_list.append(
-                            self.global_state[feature][self.timestep][min_agent_id]
-                            / self.grid_length
-                        )
+                    feature_list.extend(
+                        self.global_state[feature][self.timestep][min_agent_id]
+                        / self.grid_length
+                        for feature in [
+                            _LOC_X,
+                            _LOC_Y,
+                        ]
+                    )
+
                 feature_list += [
                     self.agent_type[agent_id],
                     float(self.timestep) / self.episode_length,
@@ -304,8 +303,7 @@ class TagGridWorld(CUDAEnvironmentContext):
         return data_dict
 
     def get_tensor_dictionary(self):
-        tensor_dict = DataFeed()
-        return tensor_dict
+        return DataFeed()
 
     def reset(self):
         # Reset time to the beginning

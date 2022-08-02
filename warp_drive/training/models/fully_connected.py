@@ -106,12 +106,12 @@ class FullyConnected(nn.Module):
         if isinstance(self.observation_space, Box):
             obs_size = np.prod(self.observation_space.shape)
         elif isinstance(self.observation_space, Dict):
-            obs_size = 0
-            for key in self.observation_space:
-                if key == _ACTION_MASK:
-                    pass
-                else:
-                    obs_size += np.prod(self.observation_space[key].shape)
+            obs_size = sum(
+                np.prod(self.observation_space[key].shape)
+                for key in self.observation_space
+                if key != _ACTION_MASK
+            )
+
         else:
             raise NotImplementedError("Observation space must be of Box or Dict type")
         return int(obs_size)
@@ -136,7 +136,7 @@ class FullyConnected(nn.Module):
             shape_len = len(obs.shape)
             if shape_len == 1:
                 obs = obs.reshape(-1, num_agents)  # valid only when num_agents = 1
-            obs = obs.permute(0, -1, *[dim for dim in range(1, shape_len - 1)])
+            obs = obs.permute(0, -1, *list(range(1, shape_len - 1)))
         else:
             raise ValueError(
                 "num_agents can only be the first "
@@ -178,9 +178,11 @@ class FullyConnected(nn.Module):
                 else:
                     obs_dict[key] = obs
 
-            flattened_obs_dict = {}
-            for key in obs_dict:
-                flattened_obs_dict[key] = self.reshape_and_flatten_obs(obs_dict[key])
+            flattened_obs_dict = {
+                key: self.reshape_and_flatten_obs(obs_dict[key])
+                for key in obs_dict
+            }
+
             flattened_obs = torch.cat(list(flattened_obs_dict.values()), dim=-1)
         else:
             raise NotImplementedError("Observation space must be of Box or Dict type")

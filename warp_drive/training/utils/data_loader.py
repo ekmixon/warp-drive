@@ -128,13 +128,16 @@ def create_and_push_data_placeholders(env_wrapper, policy_tag_to_agent_id_map, t
             assert all_equal(observation_shapes)
         elif isinstance(first_agent_observation_space, Dict):
             observation_shape_keys = [
-                tuple([observation_space[key].spaces.keys]) for key in observation_space
-            ]
-            assert all_equal(observation_shape_keys)
-            observation_shape_values = [
-                tuple([observation_space[key].spaces.values])
+                (observation_space[key].spaces.keys,)
                 for key in observation_space
             ]
+
+            assert all_equal(observation_shape_keys)
+            observation_shape_values = [
+                (observation_space[key].spaces.values,)
+                for key in observation_space
+            ]
+
             assert all_equal(observation_shape_values)
         else:
             raise NotImplementedError(
@@ -151,7 +154,7 @@ def create_and_push_data_placeholders(env_wrapper, policy_tag_to_agent_id_map, t
         if isinstance(first_agent_action_space, MultiDiscrete):
             action_dims = [tuple(action_space[key].nvec) for key in action_space]
         elif isinstance(first_agent_action_space, Discrete):
-            action_dims = [tuple([action_space[key].n]) for key in action_space]
+            action_dims = [(action_space[key].n, ) for key in action_space]
         else:
             raise NotImplementedError(
                 "Action spaces can be of type 'Discrete' or 'MultiDiscrete'"
@@ -258,9 +261,10 @@ def create_and_push_data_placeholders_helper(
         assert num_action_types > 1
         for action_idx in range(num_action_types):
             tensor_feed.add_data(
-                name=f"{_ACTIONS}_{action_idx}" + suffix,
+                name=f"{_ACTIONS}_{action_idx}{suffix}",
                 data=sampled_actions_placeholder,
             )
+
         tensor_feed.add_data(
             name=_ACTIONS + suffix,
             data=np.zeros(
@@ -274,7 +278,7 @@ def create_and_push_data_placeholders_helper(
         )
 
     tensor_feed.add_data(
-        name=f"{_ACTIONS}_batch" + suffix,
+        name=f"{_ACTIONS}_batch{suffix}",
         data=np.zeros(
             (training_batch_size_per_env,)
             + (
@@ -286,12 +290,16 @@ def create_and_push_data_placeholders_helper(
         ),
     )
 
+
     # Rewards
     rewards_placeholder = np.zeros((num_envs, num_agents), dtype=np.float32)
     tensor_feed.add_data(name=_REWARDS + suffix, data=rewards_placeholder)
     tensor_feed.add_data(
-        name=f"{_REWARDS}_batch" + suffix,
-        data=np.zeros((training_batch_size_per_env,) + rewards_placeholder.shape),
+        name=f"{_REWARDS}_batch{suffix}",
+        data=np.zeros(
+            (training_batch_size_per_env,) + rewards_placeholder.shape
+        ),
     )
+
 
     return tensor_feed

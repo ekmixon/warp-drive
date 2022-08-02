@@ -390,12 +390,11 @@ class CUDADataManager:
         if self.is_data_on_device_via_torch(name):
             return self._device_data_via_torch[name].cpu().numpy()
 
-        else:
-            assert name in self._device_data_pointer
+        assert name in self._device_data_pointer
 
-            v = np.empty_like(self._host_data[name])
-            cuda_driver.memcpy_dtoh(v, self._device_data_pointer[name])
-            return v
+        v = np.empty_like(self._host_data[name])
+        cuda_driver.memcpy_dtoh(v, self._device_data_pointer[name])
+        return v
 
     def data_on_device_via_torch(self, name: str) -> torch.Tensor:
         """

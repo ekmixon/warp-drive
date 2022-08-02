@@ -141,5 +141,5 @@ class A2C:
                 f"Std. of sampled action_{i} over envs": std_over_env_per_action[i],
                 f"Std. of sampled action_{i} over time": std_over_time_per_action[i],
             }
-            metrics.update(std_action)
+            metrics |= std_action
         return loss, metrics

@@ -374,11 +374,12 @@ class TagContinuous(CUDAEnvironmentContext):
 
         # Crossing the edge
         has_crossed_edge = ~(
-            (0 <= loc_x_curr_t)
+            (loc_x_curr_t >= 0)
             & (loc_x_curr_t <= self.grid_length)
-            & (0 <= loc_y_curr_t)
+            & (loc_y_curr_t >= 0)
             & (loc_y_curr_t <= self.grid_length)
         )
+
 
         # Clip x and y if agent has crossed edge
         clipped_loc_x_curr_t = self.float_dtype(
@@ -424,13 +425,13 @@ class TagContinuous(CUDAEnvironmentContext):
         When using the CUDA step function, this Python method (K_nearest_neighbors)
         is also part of the step() function!
         """
-        agent_ids_and_distances = []
+        agent_ids_and_distances = [
+            (ag_id, self.compute_distance(agent_id, ag_id))
+            for ag_id in range(self.num_agents)
+            if (ag_id != agent_id) and (self.still_in_the_game[ag_id])
+        ]
 
-        for ag_id in range(self.num_agents):
-            if (ag_id != agent_id) and (self.still_in_the_game[ag_id]):
-                agent_ids_and_distances += [
-                    (ag_id, self.compute_distance(agent_id, ag_id))
-                ]
+
         K_nearest_neighbor_ids_and_distances = heapq.nsmallest(
             self.num_other_agents_observed, agent_ids_and_distances, key=lambda x: x[1]
         )
@@ -755,8 +756,7 @@ class TagContinuous(CUDAEnvironmentContext):
         return data_dict
 
     def get_tensor_dictionary(self):
-        tensor_dict = DataFeed()
-        return tensor_dict
+        return DataFeed()
 
     def reset(self):
         """
@@ -854,12 +854,11 @@ class TagContinuous(CUDAEnvironmentContext):
             ]
 
             assert all(
-                [
-                    0 <= acc <= self.num_acceleration_levels
-                    for acc in acceleration_action_ids
-                ]
+                0 <= acc <= self.num_acceleration_levels
+                for acc in acceleration_action_ids
             )
-            assert all([0 <= turn <= self.num_turn_levels for turn in turn_action_ids])
+
+            assert all(0 <= turn <= self.num_turn_levels for turn in turn_action_ids)
 
             delta_accelerations = self.acceleration_actions[acceleration_action_ids]
             delta_turns = self.turn_actions[turn_action_ids]

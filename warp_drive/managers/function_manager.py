@@ -62,8 +62,8 @@ class CUDAFunctionManager:
         # functions from the cuda module
         self._cuda_functions = {}
         self._cuda_function_names = []
-        self._num_agents = int(num_agents)
-        self._num_envs = int(num_envs)
+        self._num_agents = num_agents
+        self._num_envs = num_envs
         self._block = (self._num_agents, 1, 1)
         self._grid = (self._num_envs, 1)
         self._default_functions_initialized = False
@@ -195,13 +195,12 @@ class CUDAFunctionManager:
                     f"{cmd} \n"
                     f"try to build the fatbin hybrid version of virtual PTX + gpu binary ... "
                 )
-            else:
-                print(f"Running cmd: {cmd}")
-                print(
-                    f"Successfully build the cubin_file "
-                    f"from {main_file} to {cubin_file}"
-                )
-                return
+            print(f"Running cmd: {cmd}")
+            print(
+                f"Successfully build the cubin_file "
+                f"from {main_file} to {cubin_file}"
+            )
+            return
 
         except Exception as err:
             print(err)
@@ -232,14 +231,13 @@ class CUDAFunctionManager:
                         f"{cmd} \n"
                         f"try to build the lower gpu-code version ... "
                     )
-                else:
-                    print(f"Running cmd: {cmd}")
-                    print(
-                        f"Successfully build the cubin_file "
-                        f"from {main_file} to {cubin_file}"
-                    )
-                    build_success = True
-                    break
+                print(f"Running cmd: {cmd}")
+                print(
+                    f"Successfully build the cubin_file "
+                    f"from {main_file} to {cubin_file}"
+                )
+                build_success = True
+                break
             except Exception as err:
                 print(err)
 
@@ -410,7 +408,7 @@ class CUDALogController:
 
         returns: the log at the host
         """
-        if check_last_valid_step is True:
+        if check_last_valid_step:
             self._cuda_check_last_valid_step(data_manager)
 
         if last_step is not None and last_step <= self.last_valid_step:
@@ -504,11 +502,7 @@ class CUDALogController:
         pos_0s = np.argwhere(log_mask == 0).reshape(-1)
         if len(pos_1s) > 0 and len(pos_0s) > 0 and pos_0s[0] < pos_1s[-1]:
             raise Exception("there is invalid log data in the middle")
-        if len(pos_1s) > 0:
-            last_valid_step = pos_1s[-1]
-        else:
-            last_valid_step = -1
-
+        last_valid_step = pos_1s[-1] if len(pos_1s) > 0 else -1
         assert last_valid_step == self.last_valid_step, (
             f"inconsistency of last_valid_step derived from "
             f"dense_log_mask = {last_valid_step} "

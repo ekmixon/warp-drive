@@ -125,9 +125,7 @@ def generate_env_rollout_animation(
 
             still_in_game = env.global_state["still_in_the_game"][i, idx]
 
-            if still_in_game:
-                pass
-            else:
+            if not still_in_game:
                 line.set_color(runner_not_in_game_color)
                 line.set_marker("")
 

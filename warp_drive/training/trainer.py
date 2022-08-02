@@ -274,9 +274,10 @@ class Trainer:
             # Assert that all the probabilities are of the same length
             # in other words the number of action types for each policy
             # is the same.
-            num_action_types = {}
-            for policy in self.policies:
-                num_action_types[policy] = len(probabilities[policy])
+            num_action_types = {
+                policy: len(probabilities[policy]) for policy in self.policies
+            }
+
             assert all_equal(list(num_action_types.values()))
 
             # Initialize combined_probabilities.
@@ -335,12 +336,13 @@ class Trainer:
                 action_name
             )
             self.cuda_envs.cuda_data_manager.data_on_device_via_torch(
-                name=f"{_ACTIONS}_batch" + suffix
+                name=f"{_ACTIONS}_batch{suffix}"
             )[batch_index] = actions
+
 
         else:
             for action_idx, probs in enumerate(probabilities):
-                action_name = f"{_ACTIONS}_{action_idx}" + suffix
+                action_name = f"{_ACTIONS}_{action_idx}{suffix}"
                 self.cuda_sample_controller.sample(
                     self.cuda_envs.cuda_data_manager, probs, action_name
                 )
@@ -352,7 +354,7 @@ class Trainer:
                     name=_ACTIONS + suffix
                 )[:, :, action_idx] = actions
                 self.cuda_envs.cuda_data_manager.data_on_device_via_torch(
-                    name=f"{_ACTIONS}_batch" + suffix
+                    name=f"{_ACTIONS}_batch{suffix}"
                 )[batch_index, :, :, action_idx] = actions
 
     def register_actions(self, action_space, suffix=""):
@@ -376,7 +378,7 @@ class Trainer:
             for action_idx in range(len(action_dim)):
                 self.cuda_sample_controller.register_actions(
                     self.cuda_envs.cuda_data_manager,
-                    action_name=f"{_ACTIONS}_{action_idx}" + suffix,
+                    action_name=f"{_ACTIONS}_{action_idx}{suffix}",
                     num_actions=action_dim[action_idx],
                 )
 
